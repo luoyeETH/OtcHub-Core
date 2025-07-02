@@ -1,0 +1,93 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-debug.log*
+
+# Production builds
+dist/
+build/
+out/
+
+# Next.js
+.next/
+.vercel/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output/
+
+# Hardhat files
+contracts/cache/
+contracts/artifacts/
+contracts/typechain-types/
+
+# Hardhat gas reports
+gas-report.txt
+
+# Hardhat coverage
+contracts/coverage/
+
+# Solidity coverage
+contracts/coverage.json
+
+# Local Hardhat network
+contracts/.hardhat_cache/
+
+# TypeScript
+*.tsbuildinfo
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.temp
+
+# Package manager lock files (choose one strategy)
+# package-lock.json
+# yarn.lock
+
+# Misc
+.cache/
+.parcel-cache/ 
