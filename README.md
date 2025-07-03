@@ -171,6 +171,10 @@ If a trade encounters issues, either party can:
 2.  Cancel a dispute: `cancelDispute(tradeId)` (only by the party who raised the dispute)
 3.  Administrator intervention: `adminWithdraw(tradeId)` (only by the administrator)
 
+## Flowchart
+
+![OtcHub flowchart](images/otc_flowchart.png)
+
 ## Security Considerations
 
 ### Implemented Security Measures
