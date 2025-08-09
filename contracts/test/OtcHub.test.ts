@@ -138,6 +138,150 @@ describe("OtcHub", function () {
     });
   });
 
+  describe("Create Trade With Fund", function () {
+    it("Should create and fund trade in one transaction (MakerSells)", async function () {
+      const agreementHash = ethers.keccak256(ethers.toUtf8Bytes("agreement"));
+      const totalAmount = PRICE + DEPOSIT; // Taker pays price + deposit in MakerSells
+
+      // Approve tokens first
+      await mockToken.connect(taker).approve(await otcHub.getAddress(), totalAmount);
+
+      const takerBalanceBefore = await mockToken.balanceOf(takerAddress);
+
+      await expect(
+        otcHub.connect(taker).createTradeWithFund(
+          makerAddress,
+          await mockToken.getAddress(),
+          PRICE,
+          DEPOSIT,
+          FUNDING_WINDOW,
+          0, // MakerSells
+          agreementHash
+        )
+      ).to.emit(otcHub, "TradeCreated")
+        .withArgs(1, makerAddress, takerAddress, agreementHash, PRICE)
+        .and.to.emit(otcHub, "TradeFunded")
+        .withArgs(1, takerAddress, totalAmount);
+
+      const trade = await otcHub.trades(1);
+      expect(trade.maker).to.equal(makerAddress);
+      expect(trade.taker).to.equal(takerAddress);
+      expect(trade.takerFunded).to.be.true;
+      expect(trade.makerFunded).to.be.false;
+      expect(trade.status).to.equal(0); // Still Open until maker funds
+
+      // Check token transfer
+      expect(await mockToken.balanceOf(takerAddress)).to.equal(takerBalanceBefore - totalAmount);
+    });
+
+    it("Should create and fund trade in one transaction (MakerBuys)", async function () {
+      const agreementHash = ethers.keccak256(ethers.toUtf8Bytes("agreement"));
+      const depositAmount = DEPOSIT; // Taker pays only deposit in MakerBuys
+
+      // Approve tokens first
+      await mockToken.connect(taker).approve(await otcHub.getAddress(), depositAmount);
+
+      const takerBalanceBefore = await mockToken.balanceOf(takerAddress);
+
+      await expect(
+        otcHub.connect(taker).createTradeWithFund(
+          makerAddress,
+          await mockToken.getAddress(),
+          PRICE,
+          DEPOSIT,
+          FUNDING_WINDOW,
+          1, // MakerBuys
+          agreementHash
+        )
+      ).to.emit(otcHub, "TradeCreated")
+        .withArgs(1, makerAddress, takerAddress, agreementHash, PRICE)
+        .and.to.emit(otcHub, "TradeFunded")
+        .withArgs(1, takerAddress, depositAmount);
+
+      const trade = await otcHub.trades(1);
+      expect(trade.takerFunded).to.be.true;
+      expect(trade.makerFunded).to.be.false;
+      expect(trade.status).to.equal(0); // Still Open until maker funds
+
+      // Check token transfer
+      expect(await mockToken.balanceOf(takerAddress)).to.equal(takerBalanceBefore - depositAmount);
+    });
+
+    it("Should revert if insufficient allowance", async function () {
+      const agreementHash = ethers.keccak256(ethers.toUtf8Bytes("agreement"));
+      const totalAmount = PRICE + DEPOSIT;
+
+      // Approve less than required
+      await mockToken.connect(taker).approve(await otcHub.getAddress(), totalAmount - 1n);
+
+      await expect(
+        otcHub.connect(taker).createTradeWithFund(
+          makerAddress,
+          await mockToken.getAddress(),
+          PRICE,
+          DEPOSIT,
+          FUNDING_WINDOW,
+          0, // MakerSells
+          agreementHash
+        )
+      ).to.be.revertedWith("Insufficient token allowance");
+    });
+
+    it("Should revert if insufficient balance", async function () {
+      const agreementHash = ethers.keccak256(ethers.toUtf8Bytes("agreement"));
+      const totalAmount = PRICE + DEPOSIT;
+
+      // Transfer away most tokens to create insufficient balance
+      const currentBalance = await mockToken.balanceOf(takerAddress);
+      await mockToken.connect(taker).transfer(otherAddress, currentBalance - totalAmount + 1n);
+
+      // Approve sufficient amount
+      await mockToken.connect(taker).approve(await otcHub.getAddress(), totalAmount);
+
+      await expect(
+        otcHub.connect(taker).createTradeWithFund(
+          makerAddress,
+          await mockToken.getAddress(),
+          PRICE,
+          DEPOSIT,
+          FUNDING_WINDOW,
+          0, // MakerSells
+          agreementHash
+        )
+      ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
+    });
+
+    it("Should revert with invalid parameters", async function () {
+      const agreementHash = ethers.keccak256(ethers.toUtf8Bytes("agreement"));
+
+      // Test zero maker address
+      await expect(
+        otcHub.connect(taker).createTradeWithFund(
+          ethers.ZeroAddress,
+          await mockToken.getAddress(),
+          PRICE,
+          DEPOSIT,
+          FUNDING_WINDOW,
+          0,
+          agreementHash
+        )
+      ).to.be.revertedWith("Invalid maker");
+
+      // Test maker same as taker
+      await expect(
+        otcHub.connect(taker).createTradeWithFund(
+          takerAddress,
+          await mockToken.getAddress(),
+          PRICE,
+          DEPOSIT,
+          FUNDING_WINDOW,
+          0,
+          agreementHash
+        )
+      ).to.be.revertedWith("Invalid maker");
+    });
+  });
+
   describe("Trade Funding", function () {
     let tradeId: number;
     let agreementHash: string;

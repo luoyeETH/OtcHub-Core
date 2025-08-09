@@ -75,6 +75,15 @@ async function main() {
 
   console.log("\nDeployment Summary:");
   console.log(JSON.stringify(deploymentInfo, null, 2));
+
+  if (network.name === "sepolia") {
+    console.log(`\nTo verify the contract on Sepolia, run the following command:`);
+    console.log(`npm run verify:sepolia -- ${otcHubAddress} ${admin} ${vault} ${initialFeeBps}`);
+  }
+  if (network.name === "mainnet") {
+    console.log(`\nTo verify the contract on Mainnet, run the following command:`);
+    console.log(`npm run verify:mainnet -- ${otcHubAddress} ${admin} ${vault} ${initialFeeBps}`);
+  }
 }
 
 // We recommend this pattern to be able to use async/await everywhere
